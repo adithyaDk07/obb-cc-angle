@@ -69,11 +69,28 @@ class ObjectDetectionSoftware:
         self.menubar.add_cascade(label="Camera", menu=self.camera_menu)
 
                                                          # Model menu
+        
         self.model_menu = tk.Menu(self.menubar, tearoff=0)
-        self.model_menu.add_command(label="Detectron2", command=lambda: self.select_model("detectron2"))
-        self.model_menu.add_command(label="YOLOv8-Seg", command=lambda: self.select_model("yolov8-seg"))
-        self.model_menu.add_command(label="Custom Model", command=self.load_custom_model)
+
+        # Create SEGMENTATION submenu
+        self.segmentation_menu = tk.Menu(self.model_menu, tearoff=0)
+        self.segmentation_menu.add_command(label="Detectron2", command=lambda: self.select_model("detectron2"))
+        self.segmentation_menu.add_command(label="YOLO-Seg", command=lambda: self.select_model("yolov8-seg"))
+        self.segmentation_menu.add_command(label="+", command=self.load_custom_model)
+
+        # Create OBB submenu
+        self.obb_menu = tk.Menu(self.model_menu, tearoff=0)
+        self.obb_menu.add_command(label="YOLO-OBB", command=lambda: self.select_model("yolo-obb"))
+        self.obb_menu.add_command(label="+", command=self.load_custom_model)
+
+        # Add submenus to the main model menu
+        self.model_menu.add_cascade(label="SEGMENTATION", menu=self.segmentation_menu)
+        self.model_menu.add_cascade(label="OBB", menu=self.obb_menu)
+
+        # Add the main model menu to the menubar
         self.menubar.add_cascade(label="Model", menu=self.model_menu)
+
+
                                 
         self.limits_menu=tk.Menu(self.menubar,tearoff=0)
         self.limits_menu.add_command(label="Set Limits", command=self.open_limits_dialog)
@@ -223,11 +240,11 @@ class ObjectDetectionSoftware:
         self.create_input_rows()
 
         # Add labels to display current limits
-    #    self.width_limit_label = ctk.CTkLabel(self.inputs_frame, text=f"Width Limit: {self.width_limit:.2f} cm")
-    #    self.width_limit_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        #self.width_limit_label = ctk.CTkLabel(self.inputs_frame, text=f"Width Limit: {self.width_limit:.2f} cm")
+        #self.width_limit_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
 
-    #    self.height_limit_label = ctk.CTkLabel(self.inputs_frame, text=f"Height Limit: {self.height_limit:.2f} cm")
-    #    self.height_limit_label.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        #self.height_limit_label = ctk.CTkLabel(self.inputs_frame, text=f"Height Limit: {self.height_limit:.2f} cm")
+        #self.height_limit_label.grid(row=2, column=1, padx=5, pady=5, sticky="w")
 
     def create_input_rows(self):
         # Workspace Dimension row
@@ -367,16 +384,18 @@ class ObjectDetectionSoftware:
             # Update entry fields with current variable values, but do not modify variables
             self.update_entry_fields()
 
-
     def set_dimension(self):
         try:
-            self.workspace_width_cm = float(self.width_entry.get())
-            self.workspace_height_cm = float(self.height_entry.get())
-            self.add_output_row(f"Workspace dimensions set to: {self.workspace_width_cm}cm x {self.workspace_height_cm}cm")
-            self.save_settings()
+            if self.toggle_var.get():  # Check if the toggle is enabled
+                self.workspace_width_cm = float(self.width_entry.get())
+                self.workspace_height_cm = float(self.height_entry.get())
+                self.add_output_row(f"Workspace dimensions set to: {self.workspace_width_cm}cm x {self.workspace_height_cm}cm")
+                self.save_settings()  # Save settings only if the toggle is enabled
+            else:
+                self.add_output_row("Toggle is disabled. Dimensions not saved.")
         except ValueError:
             self.add_output_row("Invalid input. Please enter numeric values for width and height.")
-    
+
     def save_settings(self):
         try:
             # Load current settings from file
@@ -386,10 +405,11 @@ class ObjectDetectionSoftware:
             else:
                 current_settings = {}
 
-            # Update workspace dimensions if changed
-            current_settings['workspace_width_cm'] = self.workspace_width_cm
-            current_settings['workspace_height_cm'] = self.workspace_height_cm
-            
+            # Update workspace dimensions if toggle is enabled
+            if self.toggle_var.get():
+                current_settings['workspace_width_cm'] = self.workspace_width_cm
+                current_settings['workspace_height_cm'] = self.workspace_height_cm
+
             # Update robot communication settings if changed
             current_settings['robot_ip'] = self.robot_ip
             current_settings['robot_port'] = self.robot_port
@@ -407,7 +427,6 @@ class ObjectDetectionSoftware:
             self.add_output_row(f"Error saving settings: {str(e)}")
             print("Exception occurred:", str(e))
 
-        
 
     def select_camera(self, camera_index):
         self.selected_camera = camera_index
@@ -511,8 +530,7 @@ class ObjectDetectionSoftware:
             self.output_display.append("Invalid port number. Enter a valid integer.")
         except Exception as e:
             self.output_display.append(f"Failed to send data to robot: {str(e)}")
-        
-            
+         
     def send_inspection_data_to_robot(self, inspection_data):
         if not self.robot_ip or not self.robot_port:
             # self.output_display.append("Robot IP or port not set. Please configure robot connection.")
@@ -529,7 +547,6 @@ class ObjectDetectionSoftware:
             self.output_display.append("Invalid port number. Enter a valid integer.")
         except Exception as e:
             self.output_display.append(f"Failed to send data to robot: {str(e)}")
-
 
     def capture_and_process_image(self):
         ret, frame = self.cap.read()
@@ -779,4 +796,8 @@ if __name__ == "__main__":
     root = ctk.CTk()
     app = ObjectDetectionSoftware(root)
     root.mainloop()
+
+
+                          
+
 
