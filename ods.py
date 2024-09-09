@@ -45,6 +45,7 @@ class ObjectDetectionSoftware:
         self.create_main_layout()
         self.create_control_panel()
         self.update_ui_with_settings()
+        self.output_display = []
 
         self.cap = cv2.VideoCapture(self.selected_camera)
         self.update_webcam_feed()
@@ -188,26 +189,27 @@ class ObjectDetectionSoftware:
         self.ams_label.place(relx=0.06, rely=0.028)  # Adjust relx to position it next to the logo
 
         # Add Object Detection System text under AMS-INDIA
-        self.ods_label = ctk.CTkLabel(self.root, text="Object Detection Software", font=("montserrat", 16,"bold"))
+        self.ods_label = ctk.CTkLabel(self.root, text="Object Detection Software", font=("montserrat", 16, "bold"))
         self.ods_label.place(relx=0.06, rely=0.060)  # Adjust relx and rely to position it directly under AMS-INDIA
 
-
-        self.webcam_frame = ctk.CTkLabel(self.root, text="", corner_radius=0,bg_color="#EAEDF0")
+        self.webcam_frame = ctk.CTkLabel(self.root, text="", corner_radius=0, bg_color="#EAEDF0")
         self.webcam_frame.place(relx=0.04, rely=0.12, relwidth=0.35, relheight=0.6)
 
-    
-        self.saved_image = ctk.CTkLabel(self.root, text="", corner_radius=0,bg_color="#EAEDF0")
+        self.saved_image = ctk.CTkLabel(self.root, text="", corner_radius=0, bg_color="#EAEDF0")
         self.saved_image.place(relx=0.405, rely=0.12, relwidth=0.35, relheight=0.6)
 
-        
-        self.output_frame = ctk.CTkLabel(self.root, text="OUTPUT",font=("montserrat",14),text_color='black',  corner_radius=0,bg_color="#C0C0C0")
-        self.output_frame.place(relx=0.77, rely=0.12, relwidth=0.2, relheight=0.6)
+        # Reduce output frame height and place the terminal below it
+        self.output_frame = ctk.CTkLabel(self.root, text="OUTPUT", font=("montserrat", 14), text_color='black', corner_radius=0, bg_color="#C0C0C0")
+        self.output_frame.place(relx=0.77, rely=0.12, relwidth=0.2, relheight=0.45)  # Reduced height
+
+        # Terminal box (for logs or messages)
+        self.terminal_frame = ctk.CTkLabel(self.root, text="TERMINAL", font=("montserrat", 14), text_color='black', corner_radius=0, bg_color="#C0C0C0")
+        self.terminal_frame.place(relx=0.77, rely=0.58, relwidth=0.2, relheight=0.15)  # Positioned below output_frame
 
         
         self.bin_selection_label = ctk.CTkLabel(self.root, text="Bin Selection", font=("Arial", 16))
         self.bin_selection_label.place(relx=0.60, rely=0.80, anchor="center")
 
-        
         bin_numbers = [str(i) for i in range(1, 10)]
         self.selected_bin = tk.StringVar(value=bin_numbers[0]) 
 
@@ -245,6 +247,11 @@ class ObjectDetectionSoftware:
 
         #self.height_limit_label = ctk.CTkLabel(self.inputs_frame, text=f"Height Limit: {self.height_limit:.2f} cm")
         #self.height_limit_label.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+
+    def update_terminal(self, text):
+        self.terminal_frame.insert(tk.END, f"{text}\n")
+        self.terminal_frame.see(tk.END)  # Scroll to the end for the latest log
+
 
     def create_input_rows(self):
         # Workspace Dimension row
@@ -427,7 +434,6 @@ class ObjectDetectionSoftware:
             self.add_output_row(f"Error saving settings: {str(e)}")
             print("Exception occurred:", str(e))
 
-
     def select_camera(self, camera_index):
         self.selected_camera = camera_index
         if self.cap is not None:
@@ -527,9 +533,9 @@ class ObjectDetectionSoftware:
                 s.sendall(message.encode())
                 self.output_display.append(f"Sent to robot: {message}")
         except ValueError:
-            self.output_display.append("Invalid port number. Enter a valid integer.")
+            print("Invalid port number. Enter a valid integer.")
         except Exception as e:
-            self.output_display.append(f"Failed to send data to robot: {str(e)}")
+            print(f"Failed to send data to robot: {str(e)}")
          
     def send_inspection_data_to_robot(self, inspection_data):
         if not self.robot_ip or not self.robot_port:
@@ -548,29 +554,64 @@ class ObjectDetectionSoftware:
         except Exception as e:
             self.output_display.append(f"Failed to send data to robot: {str(e)}")
 
-    def capture_and_process_image(self):
-        ret, frame = self.cap.read()
-        if ret:
-            self.captured_image = frame
-            masks = self.process_image(self.captured_image)
-
-            if len(masks) == 0:
-                self.add_output_row("No object detected.")
-                return
-
-            mask = masks[0]
-            mask_image = (mask * 255).astype('uint8')
-            color_mask = cv2.applyColorMap(mask_image, cv2.COLORMAP_JET)
-            segmented_image = cv2.addWeighted(self.captured_image, 0.7, color_mask, 0.3, 0)
-
-            program_directory = os.path.dirname(os.path.abspath(__file__))
-            save_path = os.path.join(program_directory, 'output_image.png')
-            cv2.imwrite(save_path, segmented_image)
-            self.captured_image_path = save_path  # Save path of the processed image
-
-            self.display_captured_image(segmented_image)
+    def add_output_row(self, output_str):
+        # Method to add output to the Tkinter output frame
+        row = tk.Label(self.output_frame, text=output_str, bg="gray", fg="white", font=("Arial", 10))
+        row.pack(fill="x", padx=10, pady=2)
+        
+    def process_image(self, image):
+        if self.selected_model == "detectron2":
+            outputs = self.predictor(image)
+            return outputs["instances"].pred_masks.numpy()
+        elif self.selected_model == "yolov8":
+            results = self.yolo_model(image, stream=True)
+            for result in results:
+                if result.masks is not None:
+                    return result.masks.data.cpu().numpy()
+            return np.array([])
+        elif self.selected_model == "custom":
+            if self.custom_model_path.endswith('.pt'):  # Assuming it's a YOLOv8 model
+                custom_model = YOLO(self.custom_model_path)
+                results = custom_model(image, stream=True)
+                for result in results:
+                    if result.masks is not None:
+                        return result.masks.data.cpu().numpy()
+            else:
+                self.add_output_row("Unsupported custom model format")
+            return np.array([])
         else:
-            self.add_output_row("Failed to capture image.")
+            self.add_output_row("No valid model selected")
+            return np.array([])
+
+    def clear_output(self):
+        """Clears all the content from the output frame."""
+        for widget in self.output_frame.winfo_children():
+               widget.destroy()
+
+
+    def capture_and_process_image(self):
+            ret, frame = self.cap.read()
+            if ret:
+                self.captured_image = frame
+                masks = self.process_image(self.captured_image)
+
+                if len(masks) == 0:
+                    self.add_output_row("No object detected.")
+                    return
+
+                mask = masks[0]
+                mask_image = (mask * 255).astype('uint8')
+                color_mask = cv2.applyColorMap(mask_image, cv2.COLORMAP_JET)
+                segmented_image = cv2.addWeighted(self.captured_image, 0.7, color_mask, 0.3, 0)
+
+                program_directory = os.path.dirname(os.path.abspath(__file__))
+                save_path = os.path.join(program_directory, 'output_image.png')
+                cv2.imwrite(save_path, segmented_image)
+                self.captured_image_path = save_path  # Save path of the processed image
+
+                self.display_captured_image(segmented_image)
+            else:
+                self.add_output_row("Failed to capture image.")
 
     def segregation(self):
         if self.captured_image_path is None:
@@ -638,7 +679,7 @@ class ObjectDetectionSoftware:
                     bin_number = self.selected_bin.get()
 
                     # Display the current object's data as a row in the frame, including the bin number
-                    row = tk.Label(self.output_frame, text=f"{part_no}      {real_x:.2f} cm      {real_y:.2f} cm      {angle:.0f} degrees      {bin_number}",
+                    row = tk.Label(self.output_frame, text=f"{part_no}      {real_x:.2f}      {real_y:.2f}       {angle:.0f} degrees      {bin_number}",
                                 bg="gray", fg="white", font=("Arial", 10))
                     row.pack(fill="x", padx=10, pady=2)
 
@@ -677,9 +718,9 @@ class ObjectDetectionSoftware:
             else:
                 self.add_output_row(f"No object detected for segregation (Object {idx+1}).")
 
+        
         # Display the image with bounding boxes and labels
         self.display_captured_image(self.captured_image)
-
 
     def inspect(self):
         if self.captured_image_path is not None:
@@ -747,10 +788,10 @@ class ObjectDetectionSoftware:
                     box = cv2.boxPoints(rect)
                     box = np.intp(box)
                     cv2.drawContours(self.captured_image, [box], 0, (0, 255, 0), 2)
-                    
+
                     # Add part number near the top-left corner of the bounding box
                     top_left_corner = tuple(box[1])
-                    cv2.putText(self.captured_image, part_no, (int(top_left_corner[1]), int(top_left_corner[2])),
+                    cv2.putText(self.captured_image, part_no, (int(top_left_corner[0]), int(top_left_corner[1])),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
             # Display the image with bounding boxes and labels
@@ -759,38 +800,6 @@ class ObjectDetectionSoftware:
         else:
             self.add_output_row("No image captured for inspection.")
 
-    def add_output_row(self, output_str):
-        # Method to add output to the Tkinter output frame
-        row = tk.Label(self.output_frame, text=output_str, bg="gray", fg="white", font=("Arial", 10))
-        row.pack(fill="x", padx=10, pady=2)
-    def process_image(self, image):
-        if self.selected_model == "detectron2":
-            outputs = self.predictor(image)
-            return outputs["instances"].pred_masks.numpy()
-        elif self.selected_model == "yolov8":
-            results = self.yolo_model(image, stream=True)
-            for result in results:
-                if result.masks is not None:
-                    return result.masks.data.cpu().numpy()
-            return np.array([])
-        elif self.selected_model == "custom":
-            if self.custom_model_path.endswith('.pt'):  # Assuming it's a YOLOv8 model
-                custom_model = YOLO(self.custom_model_path)
-                results = custom_model(image, stream=True)
-                for result in results:
-                    if result.masks is not None:
-                        return result.masks.data.cpu().numpy()
-            else:
-                self.add_output_row("Unsupported custom model format")
-            return np.array([])
-        else:
-            self.add_output_row("No valid model selected")
-            return np.array([])
-
-    def clear_output(self):
-        """Clears all the content from the output frame."""
-        for widget in self.output_frame.winfo_children():
-               widget.destroy()
 
 if __name__ == "__main__":
     root = ctk.CTk()
@@ -799,5 +808,6 @@ if __name__ == "__main__":
 
 
                           
+
 
 
