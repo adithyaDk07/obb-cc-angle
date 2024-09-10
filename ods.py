@@ -152,6 +152,8 @@ class ObjectDetectionSoftware:
         except Exception as e:
             self.terminal_frame.insert(tk.END,f"Error saving limits: {str(e)}\n")
 
+
+
 # Function to open a directory dialog to choose a model
     def open_model_directory(self):
     # Open file dialog to select either .pt or .h5 files
@@ -162,9 +164,15 @@ class ObjectDetectionSoftware:
         if model_file:
             self.terminal_frame.insert(tk.END,f"Custom model selected: {model_file}")
 
+
+
+
     def select_model(self, model_name):
         self.selected_model = model_name
         self.terminal_frame.insert(tk.END,f"Selected model: {model_name}")
+
+
+
 
     def load_custom_model(self):
         model_file = tk.filedialog.askopenfilename(
@@ -175,6 +183,9 @@ class ObjectDetectionSoftware:
             self.custom_model_path = model_file
             self.selected_model = "custom"
             self.terminal_frame.insert(tk.END,f"Custom model loaded: {model_file}")
+
+
+
 
     def create_main_layout(self):
         logo_image = Image.open(r"/home/adithyadk/Desktop/checkerBoard/primary.jpg")  # Replace with the path to your logo file
@@ -467,8 +478,11 @@ class ObjectDetectionSoftware:
         self.predictor = DefaultPredictor(self.cfg)
 
     def setup_yolov8(self):
-        self.yolo_model = YOLO('yolov8n-seg.pt')
-
+        try:
+            self.yolo_model = YOLO('yolov8n-seg.pt')
+            self.terminal_frame.insert(tk.END, "YOLOv8 model initialized successfully\n")
+        except Exception as e:
+            print( f"Error initializing YOLOv8 model: {str(e)}\n")
     def update_webcam_feed(self):
         ret, frame = self.cap.read()
         if ret:
@@ -578,25 +592,34 @@ class ObjectDetectionSoftware:
         if self.selected_model == "detectron2":
             outputs = self.predictor(image)
             return outputs["instances"].pred_masks.numpy()
-        elif self.selected_model == "yolov8":
-            results = self.yolo_model(image, stream=True)
+        elif self.selected_model == "yolov8-seg":
+            return self._process_yolov8(image)
+        elif self.selected_model == "custom":
+            return self._process_custom_model(image)
+        else:
+            self.terminal_frame.insert(tk.END, "No valid model selected\n")
+            return np.array([])
+
+    def _process_yolov8(self, image):
+        if not hasattr(self, 'yolo_model'):
+            self.terminal_frame.insert(tk.END, "YOLOv8 model not initialized\n")
+            return np.array([])
+        results = self.yolo_model(image, stream=True)
+        for result in results:
+            if result.masks is not None:
+                return result.masks.data.cpu().numpy()
+        return np.array([])
+    
+    def _process_custom_model(self, image):
+        if self.custom_model_path.endswith('.pt'):  # Assuming it's a YOLOv8 model
+            custom_model = YOLO(self.custom_model_path)
+            results = custom_model(image, stream=True)
             for result in results:
                 if result.masks is not None:
                     return result.masks.data.cpu().numpy()
-            return np.array([])
-        elif self.selected_model == "custom":
-            if self.custom_model_path.endswith('.pt'):  # Assuming it's a YOLOv8 model
-                custom_model = YOLO(self.custom_model_path)
-                results = custom_model(image, stream=True)
-                for result in results:
-                    if result.masks is not None:
-                        return result.masks.data.cpu().numpy()
-            else:
-                self.terminal_frame.insert(tk.END,"Unsupported custom model format\n")
-            return np.array([])
         else:
-            self.terminal_frame.insert(tk.END,"No valid model selected\n")
-            return np.array([])
+            self.terminal_frame.insert(tk.END, "Unsupported custom model format\n")
+        return np.array([])
 
     def clear_output(self):
         """Clears all the content from the output frame."""
