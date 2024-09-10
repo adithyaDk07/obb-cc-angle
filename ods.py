@@ -202,9 +202,6 @@ class ObjectDetectionSoftware:
         self.output_frame = ctk.CTkLabel(self.root, text="OUTPUT", font=("montserrat", 14), text_color='black', corner_radius=0, bg_color="#C0C0C0")
         self.output_frame.place(relx=0.77, rely=0.12, relwidth=0.2, relheight=0.45)  # Reduced height
 
-        # Terminal box (for logs or messages)
-        self.terminal_frame = ctk.CTkLabel(self.root, text="TERMINAL", font=("montserrat", 14), text_color='black', corner_radius=0, bg_color="#C0C0C0")
-        self.terminal_frame.place(relx=0.77, rely=0.58, relwidth=0.2, relheight=0.15)  # Positioned below output_frame
 
         
         self.bin_selection_label = ctk.CTkLabel(self.root, text="Bin Selection", font=("Arial", 16))
@@ -216,7 +213,7 @@ class ObjectDetectionSoftware:
         self.bin_option_menu = ctk.CTkOptionMenu(self.root, variable=self.selected_bin, values=bin_numbers)
         self.bin_option_menu.place(relx=0.60, rely=0.82, relwidth=0.08, relheight=0.04)  
 
-        self.terminal_frame = ctk.CTkTextbox(self.root, font=("Arial", 12), text_color='white', corner_radius=0, bg_color="#C0C0C0")
+        self.terminal_frame = ctk.CTkTextbox(self.root, font=("Arial", 14), text_color='white', corner_radius=0, scrollbar_button_hover_color="#8f8b8b", bg_color="#8f8b8b")
         self.terminal_frame.place(relx=0.77, rely=0.58, relwidth=0.2, relheight=0.15)
 
     def create_control_panel(self):
