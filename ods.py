@@ -146,11 +146,11 @@ class ObjectDetectionSoftware:
             self.save_settings()
             dialog_window.destroy()
             self.update_ui_with_settings()
-            self.add_output_row("Limits saved successfully.")
+            self.terminal_frame.insert(tk.END,"Limits saved successfully.\n")
         except ValueError:
-            self.add_output_row("Invalid input. Please enter numeric values for limits.")
+            self.terminal_frame.insert(tk.END,"Invalid input. Please enter numeric values for limits.\n")
         except Exception as e:
-            self.add_output_row(f"Error saving limits: {str(e)}")
+            self.terminal_frame.insert(tk.END,f"Error saving limits: {str(e)}\n")
 
 # Function to open a directory dialog to choose a model
     def open_model_directory(self):
@@ -160,11 +160,11 @@ class ObjectDetectionSoftware:
             filetypes=[("Model Files", ".pt *.h5"), ("All Files", ".*")]
         )
         if model_file:
-            self.add_output_row(f"Custom model selected: {model_file}")
+            self.terminal_frame.insert(tk.END,f"Custom model selected: {model_file}")
 
     def select_model(self, model_name):
         self.selected_model = model_name
-        self.add_output_row(f"Selected model: {model_name}")
+        self.terminal_frame.insert(tk.END,f"Selected model: {model_name}")
 
     def load_custom_model(self):
         model_file = tk.filedialog.askopenfilename(
@@ -174,7 +174,7 @@ class ObjectDetectionSoftware:
         if model_file:
             self.custom_model_path = model_file
             self.selected_model = "custom"
-            self.add_output_row(f"Custom model loaded: {model_file}")
+            self.terminal_frame.insert(tk.END,f"Custom model loaded: {model_file}")
 
     def create_main_layout(self):
         logo_image = Image.open(r"/home/adithyadk/Desktop/checkerBoard/primary.jpg")  # Replace with the path to your logo file
@@ -216,6 +216,8 @@ class ObjectDetectionSoftware:
         self.bin_option_menu = ctk.CTkOptionMenu(self.root, variable=self.selected_bin, values=bin_numbers)
         self.bin_option_menu.place(relx=0.60, rely=0.82, relwidth=0.08, relheight=0.04)  
 
+        self.terminal_frame = ctk.CTkTextbox(self.root, font=("Arial", 12), text_color='white', corner_radius=0, bg_color="#C0C0C0")
+        self.terminal_frame.place(relx=0.77, rely=0.58, relwidth=0.2, relheight=0.15)
 
     def create_control_panel(self):
         # Buttons: Segregation, Inspection, Capture
@@ -237,7 +239,7 @@ class ObjectDetectionSoftware:
         self.toggle_switch.place(relx=0.085, rely=0.75)
 
         self.inputs_frame = ctk.CTkFrame(self.root)
-        self.inputs_frame.place(relx=0.05, rely=0.78, relwidth=0.45, relheight=0.12)
+        self.inputs_frame.place(relx=0.05, rely=0.78, relwidth=0.45, relheight=0.15)
 
         self.create_input_rows()
 
@@ -255,42 +257,57 @@ class ObjectDetectionSoftware:
 
     def create_input_rows(self):
         # Workspace Dimension row
-  #      self.label3 =ctk.CTkLabel(self.inputs_frame, text="")
-  #      self.label3.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.label3 =ctk.CTkLabel(self.inputs_frame, text="")
+        self.label3.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
-  #      self.dummy_entry=ctk.CTkLabel(self.inputs_frame,text="")
-  #      self.dummy_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.dummy_entry=ctk.CTkLabel(self.inputs_frame,text="Width")
+        self.dummy_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-  #      self.dummy_entry2=ctk.CTkLabel(self.inputs_frame,text="")
-  #      self.dummy_entry2.grid(row=0,column=2,padx=5,pady=5 ,sticky="ew")
+        self.dummy_entry2=ctk.CTkLabel(self.inputs_frame,text="Height")
+        self.dummy_entry2.grid(row=0,column=2,padx=5,pady=5 ,sticky="ew")
+
+
 
         self.label1 = ctk.CTkLabel(self.inputs_frame, text="Workspace Dimensions (in CM)")
-        self.label1.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.label1.grid(row=1, column=0, padx=5, pady=5, sticky="w")
 
         self.width_entry = ctk.CTkEntry(self.inputs_frame, placeholder_text="Width")
-        self.width_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.width_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
         self.height_entry = ctk.CTkEntry(self.inputs_frame, placeholder_text="Height")
-        self.height_entry.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+        self.height_entry.grid(row=1, column=2, padx=5, pady=5, sticky="ew")
 
         self.set_dimension_button = ctk.CTkButton(self.inputs_frame, text="Set Dimension", command=self.set_dimension)
-        self.set_dimension_button.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.set_dimension_button.grid(row=1, column=3, padx=5, pady=5, sticky="ew")
 
+
+        # Workspace Dimension row
+        self.label3 =ctk.CTkLabel(self.inputs_frame, text="")
+        self.label3.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+
+        self.dummy_entry=ctk.CTkLabel(self.inputs_frame,text="IP Address")
+        self.dummy_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
+
+        self.dummy_entry2=ctk.CTkLabel(self.inputs_frame,text="Port")
+        self.dummy_entry2.grid(row=2,column=2,padx=5,pady=5 ,sticky="ew")
 
         # Communication row for IP and Port
         self.label2 = ctk.CTkLabel(self.inputs_frame, text="Communication")
-        self.label2.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.label2.grid(row=3, column=0, padx=5, pady=5, sticky="w")
 
         self.ip_entry = ctk.CTkEntry(self.inputs_frame, placeholder_text="IP Address")
-        self.ip_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        self.ip_entry.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
 
         self.port_entry = ctk.CTkEntry(self.inputs_frame, placeholder_text="Port")
-        self.port_entry.grid(row=1, column=2, padx=5, pady=5, sticky="ew")
+        self.port_entry.grid(row=3, column=2, padx=5, pady=5, sticky="ew")
 
         self.connect_button = ctk.CTkButton(self.inputs_frame, text="Connect", command=self.connect_to_robot)
-        self.connect_button.grid(row=1, column=3, padx=5, pady=5, sticky="ew")
+        self.connect_button.grid(row=3, column=3, padx=5, pady=5, sticky="ew")
+
+        
         for i in range(4):
             self.inputs_frame.grid_columnconfigure(i, weight=1)
+
 
     def load_settings(self):
         default_settings = {
@@ -379,7 +396,7 @@ class ObjectDetectionSoftware:
                 # Save settings to file
                 self.save_settings()
             except ValueError:
-                self.add_output_row("Invalid input values. Please enter valid numbers.")
+                self.terminal_frame.insert(tk.END,"Invalid input values. Please enter valid numbers.\n")
         else:  # If the toggle is disabled
             # Make entry fields read-only
             self.width_entry.config(state='readonly')
@@ -396,12 +413,12 @@ class ObjectDetectionSoftware:
             if self.toggle_var.get():  # Check if the toggle is enabled
                 self.workspace_width_cm = float(self.width_entry.get())
                 self.workspace_height_cm = float(self.height_entry.get())
-                self.add_output_row(f"Workspace dimensions set to: {self.workspace_width_cm}cm x {self.workspace_height_cm}cm")
+                self.terminal_frame.insert(tk.END, f"Workspace dimensions set to: {self.workspace_width_cm}cm x {self.workspace_height_cm}cm \n")
                 self.save_settings()  # Save settings only if the toggle is enabled
             else:
-                self.add_output_row("Toggle is disabled. Dimensions not saved.")
+                self.terminal_frame.insert(tk.END, "Toggle is disabled. Dimensions not saved. \n")
         except ValueError:
-            self.add_output_row("Invalid input. Please enter numeric values for width and height.")
+            self.terminal_frame.insert(tk.END, "Invalid input. Please enter numeric values for width and height.\n")
 
     def save_settings(self):
         try:
@@ -429,9 +446,9 @@ class ObjectDetectionSoftware:
             with open(SETTINGS_FILE, 'w') as f:
                 json.dump(current_settings, f, indent=4)
 
-            self.add_output_row("Settings updated and saved successfully.")
+            self.terminal_frame.insert(tk.END,"Settings updated and saved successfully.\n")
         except Exception as e:
-            self.add_output_row(f"Error saving settings: {str(e)}")
+            self.terminal_frame.insert(tk.END,f"Error saving settings: {str(e)}\n")
             print("Exception occurred:", str(e))
 
     def select_camera(self, camera_index):
@@ -440,9 +457,9 @@ class ObjectDetectionSoftware:
             self.cap.release()
         self.cap = cv2.VideoCapture(self.selected_camera)
         if not self.cap.isOpened():
-            self.add_output_row(f"Error: Could not open camera {self.selected_camera}")
+            self.terminal_frame.insert(tk.END,f"Error: Could not open camera {self.selected_camera}\n")
         else:
-            self.add_output_row(f"Successfully opened camera {self.selected_camera}")
+            self.terminal_frame.insert(tk.END,f"Successfully opened camera {self.selected_camera}\n")
 
     def setup_detectron2(self):
         self.cfg = get_cfg()
@@ -480,9 +497,9 @@ class ObjectDetectionSoftware:
                 width, height = map(float, dimensions.split(','))
                 self.workspace_width_cm = width
                 self.workspace_height_cm = height
-                self.add_output_row(f"Workspace dimensions set to: {width}cm x {height}cm")
+                self.terminal_frame.insert(tk.END,f"Workspace dimensions set to: {width}cm x {height}cm\n")
             except ValueError:
-                self.add_output_row("Invalid input. Please enter two numbers separated by a comma.")
+                self.terminal_frame.insert(tk.END,"Invalid input. Please enter two numbers separated by a comma.\n")
 
     def show_robot_config_dialog(self):
         dialog = ctk.CTkInputDialog(text="Enter robot IP and port (IP,port):", title="Configure Robot")
@@ -492,10 +509,10 @@ class ObjectDetectionSoftware:
                 ip, port = config.split(',')
                 self.robot_ip = ip.strip()
                 self.robot_port = int(port.strip())
-                self.add_output_row(f"Robot configuration set to: IP={self.robot_ip}, Port={self.robot_port}")
+                self.terminal_frame.insert(tk.END,f"Robot configuration set to: IP={self.robot_ip}, Port={self.robot_port}\n")
                 self.save_settings()  # Save settings after updating
             except ValueError:
-                self.add_output_row("Invalid input. Please enter IP and port separated by a comma.")
+                self.terminal_frame.insert(tk.END,"Invalid input. Please enter IP and port separated by a comma.\n")
 
     def connect_to_robot(self):
         try:
@@ -511,14 +528,14 @@ class ObjectDetectionSoftware:
             
             # Save settings if connection is successful
             self.save_settings()
-            self.add_output_row(f"Connected to robot at IP={self.robot_ip}, Port={self.robot_port}")
+            self.terminal_frame.insert(tk.END,f"Connected to robot at IP={self.robot_ip}, Port={self.robot_port}\n")
 
         except ValueError:
-            self.add_output_row("Invalid port number. Please enter a valid integer.")
+            self.terminal_frame.insert(tk.END,"Invalid port number. Please enter a valid integer.\n")
         except socket.error as e:
-            self.add_output_row(f"Connection failed: {e}")
+            self.terminal_frame.insert(tk.END,f"Connection failed: {e}\n")
         except Exception as e:
-            self.add_output_row(f"An unexpected error occurred: {e}")
+           self.terminal_frame.insert(tk.END,f"An unexpected error occurred: {e}\n")
 
     def send_to_robot(self, object_data):
         if not self.robot_ip or not self.robot_port:
@@ -529,13 +546,13 @@ class ObjectDetectionSoftware:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(5)  
                 s.connect((self.robot_ip, port))
-                message = f"MOVE {object_data['x']:.2f} {object_data['y']:.2f} {object_data['angle']:.2f}"
+                message = f"MOVE PartNo:{object_data['part_no']}, Xc:{object_data['x']:.2f}, Yc:{object_data['y']:.2f}, Angle:{object_data['angle']:.2f}"
                 s.sendall(message.encode())
                 self.output_display.append(f"Sent to robot: {message}")
         except ValueError:
-            print("Invalid port number. Enter a valid integer.")
+           self.terminal_frame.insert(tk.END,"Invalid port number. Enter a valid integer.\n")
         except Exception as e:
-            print(f"Failed to send data to robot: {str(e)}")
+           self.terminal_frame.insert(tk.END,f"Failed to send data to robot: {str(e)}\n")
          
     def send_inspection_data_to_robot(self, inspection_data):
         if not self.robot_ip or not self.robot_port:
@@ -546,19 +563,20 @@ class ObjectDetectionSoftware:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(5)  
                 s.connect((self.robot_ip, port))
-                message = f"Inspection Data: Width: {inspection_data['width']:.2f} cm, Height: {inspection_data['height']:.2f} cm"
+                message = f"Inspection Data: PartNo:{inspection_data['part no']} Width: {inspection_data['width']:.2f} cm, Height: {inspection_data['height']:.2f} cm, Result{inspection_data['result']}"
                 s.sendall(message.encode())
                 self.output_display.append(f"Sent to robot: {message}")
         except ValueError:
-            self.output_display.append("Invalid port number. Enter a valid integer.")
+            self.terminal_frame.insert(tk.END,"Invalid port number. Enter a valid integer.\n")
         except Exception as e:
-            self.output_display.append(f"Failed to send data to robot: {str(e)}")
+            self.terminal_frame.insert(tk.END,f"Failed to send data to robot: {str(e)}\n")
 
     def add_output_row(self, output_str):
         # Method to add output to the Tkinter output frame
         row = tk.Label(self.output_frame, text=output_str, bg="gray", fg="white", font=("Arial", 10))
         row.pack(fill="x", padx=10, pady=2)
-        
+    def add_terminal_row(self, output_str):
+        self.terminal_frame.configure(text=self.terminal_frame.cget("text") + output_str + "\n")
     def process_image(self, image):
         if self.selected_model == "detectron2":
             outputs = self.predictor(image)
@@ -577,10 +595,10 @@ class ObjectDetectionSoftware:
                     if result.masks is not None:
                         return result.masks.data.cpu().numpy()
             else:
-                self.add_output_row("Unsupported custom model format")
+                self.terminal_frame.insert(tk.END,"Unsupported custom model format\n")
             return np.array([])
         else:
-            self.add_output_row("No valid model selected")
+            self.terminal_frame.insert(tk.END,"No valid model selected\n")
             return np.array([])
 
     def clear_output(self):
@@ -611,18 +629,18 @@ class ObjectDetectionSoftware:
 
                 self.display_captured_image(segmented_image)
             else:
-                self.add_output_row("Failed to capture image.")
+                self.terminal_frame.insert(tk.END,"Failed to capture image.\n")
 
     def segregation(self):
         if self.captured_image_path is None:
-            self.add_output_row("No image captured for segregation.")
+            self.terminal_frame.insert(tk.END,"No image captured for segregation.\n")
             return
 
         # Load the saved image
         self.captured_image = cv2.imread(self.captured_image_path)
 
         if self.captured_image is None:
-            self.add_output_row("Failed to load captured image.")
+            self.terminal_frame.insert(tk.END,"Failed to load captured image.\n")
             return
 
         self.clear_output()
@@ -684,7 +702,7 @@ class ObjectDetectionSoftware:
                     row.pack(fill="x", padx=10, pady=2)
 
                     # Store the object data along with bin number for sending to the robot
-                    object_data = {"angle": angle, "x": real_x, "y": real_y, "bin": bin_number}
+                    object_data = { "part_no": part_no, "angle": angle, "x": real_x, "y": real_y, "bin": bin_number}
 
                     # Send the object data to the robot
                     self.send_to_robot(object_data)
@@ -693,6 +711,9 @@ class ObjectDetectionSoftware:
                     box = cv2.boxPoints(rect)
                     box = np.intp(box)
                     cv2.drawContours(self.captured_image, [box], 0, (0, 255, 0), 2)
+
+                    # Mark the centroid
+                    cv2.circle(self.captured_image, (cx, cy), 5, (255, 0, 0), -1)  # Blue circle
 
                     # Calculate the top-right corner
                     top_right_corner = (int(box[1][0]), int(box[1][1]))
@@ -718,8 +739,7 @@ class ObjectDetectionSoftware:
             else:
                 self.add_output_row(f"No object detected for segregation (Object {idx+1}).")
 
-        
-        # Display the image with bounding boxes and labels
+        # Display the image with bounding boxes, labels, and centroids
         self.display_captured_image(self.captured_image)
 
     def inspect(self):
@@ -728,7 +748,7 @@ class ObjectDetectionSoftware:
             self.captured_image = cv2.imread(self.captured_image_path)
 
             if self.captured_image is None:
-                self.add_output_row("Failed to load captured image.")
+                self.terminal_frame.insert(tk.END,"Failed to load captured image.\n")
                 return
 
             # Clear the output before adding new results
@@ -780,9 +800,12 @@ class ObjectDetectionSoftware:
                         result = "NOT OKAY"
 
                     # Display the current object's data as a row in the frame
-                    row = tk.Label(self.output_frame, text=f"{part_no}      {object_width_cm:.2f} cm      {object_height_cm:.2f} cm      {result}",
+                    row = tk.Label(self.output_frame, text=f"{part_no}      {object_width_cm:.2f}      {object_height_cm:.2f}       {result}",
                                 bg="gray", fg="white", font=("Arial", 10))
                     row.pack(fill="x", padx=10, pady=2)
+                    
+                    data={"part no":part_no, "width":object_width_cm, "height":object_height_cm, "result":result}
+                    self.send_inspection_data_to_robot(data)
 
                     # Draw the bounding box and part number on the image
                     box = cv2.boxPoints(rect)
@@ -798,7 +821,7 @@ class ObjectDetectionSoftware:
             self.display_captured_image(self.captured_image)
 
         else:
-            self.add_output_row("No image captured for inspection.")
+            self.terminal_frame.insert(tk.END,"No image captured for inspection.\n")
 
 
 if __name__ == "__main__":
@@ -808,6 +831,5 @@ if __name__ == "__main__":
 
 
                           
-
 
 
