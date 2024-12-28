@@ -1,8 +1,3 @@
-"""HC working on FrontEnd 
-- added buttons 
-- bins selection toggle 
-- annotation buttons 
-"""
 import sys
 import os
 import cv2
